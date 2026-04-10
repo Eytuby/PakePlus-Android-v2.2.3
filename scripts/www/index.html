@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>糖足镜 · 糖尿病足AI评估</title>
+  <title>鉴糖镜 · 糖尿病伤口AI评估</title>
   <!-- Font Awesome 图标库 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <!-- Markdown解析库 (marked) -->
@@ -451,7 +451,7 @@
           <i class="fas fa-microscope"></i>
         </div>
         <div class="title-text">
-          <h1>糖足镜</h1>
+          <h1>鉴糖镜</h1>
           <span class="badge"><i class="fas fa-shield-alt"></i> 专业评估 · 仅参考</span>
         </div>
       </div>
@@ -460,8 +460,8 @@
       </div>
     </div>
     <div class="model-tag">
-      <i class="fas fa-brain"></i> 模型: 糖足镜-Qwen3
-      <span style="margin-left: auto; font-size:0.75rem; opacity:0.7;"><i class="far fa-lock"></i> 内置知识库·源码固化</span>
+      <i class="fas fa-brain"></i> 模型: 鉴糖镜·基于Qwen-vl-Max
+      <span style="margin-left: auto; font-size:0.75rem; opacity:0.7;"><i class="far fa-lock"></i> Powered by PakePlus</span>
     </div>
   </div>
 
@@ -483,9 +483,9 @@
 
     <div class="input-container">
       <div class="input-wrapper">
-        <textarea id="messageInput" placeholder="描述足部情况，或上传图片..." rows="1"></textarea>
+        <textarea id="messageInput" placeholder="描述视部情况，或上传图片..." rows="1"></textarea>
         <input type="file" id="imageUpload" accept="image/*" style="display: none;">
-        <button class="upload-btn" id="uploadBtn" title="上传足部图片"><i class="far fa-image"></i></button>
+        <button class="upload-btn" id="uploadBtn" title="上传视部图片"><i class="far fa-image"></i></button>
       </div>
       <button class="send-btn" id="sendBtn"><i class="fas fa-arrow-up"></i></button>
     </div>
@@ -511,25 +511,35 @@
 
     // ---------- 🔒 内置知识库 & 系统提示词 (仅源码可见，用户不可修改) ----------
     const SYSTEM_PROMPT = `
-你是一名专业的糖尿病足（糖足）评估助手，名为“糖足镜”。你的核心知识库已内置如下，请严格基于此知识库并结合用户上传的图片与描述进行专业分析。
+你是一名专业的糖尿病足伤口评估助手，名为“鉴糖镜”。你的核心知识库已内置如下，请严格基于此知识库并结合用户上传的图片与描述进行专业分析。
 
 【内置知识库——糖尿病足Wagner分级及护理】
 - 0级：有发生足溃疡的危险因素，但目前无溃疡。
 - 1级：足部表浅溃疡，无感染。
 - 2级：较深的溃疡，常合并软组织感染，但无脓肿或骨髓炎。
 - 3级：深部溃疡，伴有脓肿或骨髓炎。
-- 4级：局限性坏疽（趾、足跟或前足背）。
+- 4级：局限性坏疽。
 - 5级：全足坏疽。
 
+【芒果苷敷贴适用性分析规则】
+**仅在判断分级等于低于3级时执行该项规则**
+- **适用条件**：Wagner 1级、2级、3级伤口在完成专业清创且感染受控的前提下，可考虑配合使用含芒果苷敷贴，以辅助创面愈合。
+- **使用频率建议**：
+  - 1级浅表溃疡：通常建议每1~2天更换一次，具体根据渗出情况调整。
+  - 2级较深溃疡：若渗出较多，初期可每日更换，后期视渗出减少改为每2~3天更换一次。
+  - 3级深部溃疡：必须在专业医护人员指导下使用，更换频率根据伤口床状态和敷料饱和程度决定，一般每日或隔日更换，需密切观察有无感染加重迹象。
+- **不适用与需就医提示**：Wagner 3级以上（即4级、5级），或任何出现局部严重感染、坏疽、深部脓肿、骨髓炎迹象的伤口，**不可自行使用芒果苷敷贴，必须立即就医处理**。
+
 【护理与建议原则】
-- 控制血糖、血压、血脂；足部减压（如专用鞋具）；定期专业清创；合理抗感染；改善循环。
+- 控制血糖、血压、血脂；局部减压；定期专业清创；合理抗感染；改善循环。
 - 提醒患者：任何评估都不能替代专业医生诊断，必须尽快就医。
 
 【回答要求】
-1. 若用户提供了足部图片，请仔细观察创面、颜色、范围等，结合Wagner分级给出初步倾向性分级（说明仅为AI参考）。
-2. 给出简明实用的护理要点，并强调就医必要性。
-3. 语言专业、温和、清晰，避免引起恐慌。
-4. 若无图片但描述清晰，也请基于知识库给出分析；若信息不足，请追问。
+1. 若用户提供了伤口图片，请仔细观察创面、颜色、范围、有无感染迹象等，结合Wagner分级给出初步倾向性分级（说明仅为AI参考）。
+2. 根据分级结果，明确说明当前伤口是否适合使用含芒果苷敷贴（1-3级可用，并给出推荐更换频率；3级以上明确告知不建议使用并强调就医）。
+3. 给出简明实用的综合护理要点，并强调就医必要性。
+4. 语言专业、温和、清晰，避免引起恐慌。
+5. 若无图片但描述清晰，也请基于知识库给出分析；若信息不足，请追问。
 
 请始终遵循以上知识库，并在结尾附上“以上评估仅供参考，请及时前往内分泌科或创面修复科就诊。”
 `.trim();
@@ -557,7 +567,7 @@
     function initChat() {
       const welcomeMsg = {
         role: 'assistant',
-        content: '👣 您好，我是糖足镜。请描述足部情况或上传足部照片，我将基于Wagner分级知识库为您提供初步评估与护理建议。\n\n⚠️ 本工具仅供辅助参考，不能替代医生诊断。'
+        content: '👣 您好，我是鉴糖镜。请描述视部情况或上传视部照片，我将基于Wagner分级知识库为您提供初步评估与护理建议。\n\n⚠️ 本工具仅供辅助参考，不能替代医生诊断。'
       };
       messages = [welcomeMsg];
       renderMessages();
@@ -646,9 +656,9 @@
       messageInput.disabled = loading;
       uploadBtn.disabled = loading;
       if (loading) {
-        messageInput.setAttribute('placeholder', '糖足镜思考中...');
+        messageInput.setAttribute('placeholder', '鉴糖镜思考中...');
       } else {
-        messageInput.setAttribute('placeholder', '描述足部情况，或上传图片...');
+        messageInput.setAttribute('placeholder', '描述视部情况，或上传图片...');
       }
     }
 
@@ -666,7 +676,7 @@
       currentImageBase64 = base64;
       currentImageFileName = fileName || '图片';
       previewImg.src = base64;
-      previewFileName.textContent = fileName || '足部图片';
+      previewFileName.textContent = fileName || '视部图片';
       imagePreviewContainer.style.display = 'flex';
     }
 
@@ -806,7 +816,7 @@
       messages = [];
       const welcomeMsg = {
         role: 'assistant',
-        content: '👣 您好，我是糖足镜。请描述足部情况或上传足部照片，我将基于Wagner分级知识库为您提供初步评估与护理建议。\n\n⚠️ 本工具仅供辅助参考，不能替代医生诊断。'
+        content: '👣 您好，我是鉴糖镜。请描述视部情况或上传视部照片，我将基于Wagner分级知识库为您提供初步评估与护理建议。\n\n⚠️ 本工具仅供辅助参考，不能替代医生诊断。'
       };
       messages.push(welcomeMsg);
       clearImagePreview();
@@ -818,7 +828,7 @@
     initChat();
     
     if (!API_KEY || API_KEY.includes('xxx')) {
-      console.warn('糖足镜: 请在源码中设置有效的 API_KEY (第118行附近)');
+      console.warn('鉴糖镜: 请在源码中设置有效的 API_KEY (第118行附近)');
     }
   })();
 </script>
