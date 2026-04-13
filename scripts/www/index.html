@@ -2,204 +2,52 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>鉴糖镜 · 糖尿病伤口AI评估</title>
   <!-- Font Awesome 图标库 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <!-- Markdown解析库 -->
+  <!-- Markdown解析库 (marked) -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     }
 
     body {
-      background: radial-gradient(circle at 20% 30%, #e3f2fd, #c5e0f5);
+      background: linear-gradient(145deg, #f0f9ff 0%, #e6f2fa 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 12px;
+      padding: 16px;
     }
 
-    /* 主卡片 —— 高级感蓝白毛玻璃 */
+    /* 主卡片 —— 蓝白清爽风格 */
     .glass-card {
       width: 100%;
-      max-width: 860px;
-      height: 85vh;
-      max-height: 820px;
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-radius: 40px;
-      box-shadow: 
-        0 30px 50px rgba(0, 60, 110, 0.08),
-        0 10px 25px rgba(0, 80, 130, 0.05),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      position: relative;
-    }
-
-    /* 历史侧边抽屉 (默认隐藏) */
-    .history-drawer {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 280px;
-      max-width: 80%;
-      height: 100%;
+      max-width: 880px;
+      height: 90vh;
+      max-height: 900px;
       background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
-      box-shadow: -10px 0 30px rgba(0, 40, 80, 0.1);
-      border-left: 1px solid rgba(255, 255, 255, 0.6);
-      z-index: 10;
-      transform: translateX(100%);
-      transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 36px;
+      box-shadow: 0 20px 40px rgba(0, 70, 120, 0.12), 0 8px 20px rgba(0, 105, 165, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.5);
       display: flex;
       flex-direction: column;
-      padding: 20px 0 0 0;
-      border-radius: 0 40px 40px 0;
-    }
-
-    .history-drawer.open {
-      transform: translateX(0);
-    }
-
-    .drawer-header {
-      padding: 0 18px 16px 18px;
-      border-bottom: 1px solid rgba(18, 105, 170, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .drawer-header h3 {
-      font-size: 1.2rem;
-      color: #0a3e6d;
-      font-weight: 600;
-    }
-
-    .close-drawer-btn {
-      background: none;
-      border: none;
-      color: #4f7a9e;
-      font-size: 1.3rem;
-      cursor: pointer;
-      width: 34px;
-      height: 34px;
-      border-radius: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s;
-    }
-    .close-drawer-btn:hover {
-      background: rgba(10, 102, 185, 0.1);
-    }
-
-    .history-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px 12px 20px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .history-item {
-      background: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(8px);
-      border-radius: 20px;
-      padding: 14px 16px;
-      border: 0.5px solid rgba(255,255,255,0.7);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.02);
-      transition: all 0.15s;
-    }
-    .history-item:hover {
-      background: rgba(255, 255, 255, 0.8);
-      box-shadow: 0 6px 12px rgba(10, 102, 185, 0.08);
-    }
-
-    .history-title {
-      font-weight: 600;
-      color: #0a3e6d;
-      margin-bottom: 6px;
-      font-size: 0.95rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .history-preview {
-      font-size: 0.8rem;
-      color: #3a6080;
-      opacity: 0.8;
-      white-space: nowrap;
       overflow: hidden;
-      text-overflow: ellipsis;
-      margin-bottom: 10px;
-    }
-    .history-actions {
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-    }
-    .history-actions button {
-      background: none;
-      border: none;
-      color: #0a66b9;
-      font-size: 0.9rem;
-      cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 20px;
-      transition: background 0.15s;
-    }
-    .history-actions button:hover {
-      background: rgba(10, 102, 185, 0.08);
-    }
-    .history-actions .delete-btn {
-      color: #b94a4a;
-    }
-
-    .empty-history {
-      text-align: center;
-      color: #6a8da8;
-      padding: 30px 10px;
-      font-size: 0.9rem;
-    }
-
-    .save-current-btn {
-      margin: 8px 12px 16px 12px;
-      background: rgba(10, 102, 185, 0.08);
-      border: 0.5px solid rgba(10, 102, 185, 0.2);
-      color: #0a66b9;
-      padding: 12px 16px;
-      border-radius: 40px;
-      font-weight: 500;
-      cursor: pointer;
-      backdrop-filter: blur(5px);
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .save-current-btn:hover {
-      background: #0a66b9;
-      color: white;
+      transition: all 0.2s ease;
     }
 
     /* 头部 */
     .chat-header {
-      padding: 22px 24px 16px 24px;
-      border-bottom: 1px solid rgba(18, 105, 170, 0.08);
-      background: rgba(255, 255, 255, 0.25);
+      padding: 20px 24px 16px 24px;
+      border-bottom: 1px solid rgba(18, 105, 170, 0.12);
+      background: rgba(255, 255, 255, 0.5);
     }
 
     .header-top {
@@ -212,42 +60,39 @@
     .title-section {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .logo-icon {
-      background: linear-gradient(145deg, #0a66b9, #084e8f);
-      width: 48px;
-      height: 48px;
-      border-radius: 18px;
+      background: #0a66b9;
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
-      font-size: 26px;
-      box-shadow: 0 8px 14px rgba(10, 102, 185, 0.18), inset 0 1px 2px rgba(255,255,255,0.3);
+      font-size: 24px;
+      box-shadow: 0 6px 10px rgba(10, 102, 185, 0.2);
     }
 
     .title-text h1 {
-      font-size: 2rem;
+      font-size: 1.9rem;
       font-weight: 600;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.01em;
       color: #0a3e6d;
       line-height: 1.2;
-      text-shadow: 0 1px 2px rgba(255,255,255,0.5);
     }
 
     .title-text .badge {
-      font-size: 0.7rem;
-      background: rgba(10, 102, 185, 0.08);
+      font-size: 0.75rem;
+      background: #d4e7f7;
       color: #0a66b9;
-      padding: 4px 12px;
+      padding: 4px 10px;
       border-radius: 30px;
       font-weight: 500;
       display: inline-block;
-      margin-top: 4px;
-      border: 0.5px solid rgba(10, 102, 185, 0.15);
-      backdrop-filter: blur(5px);
+      margin-top: 2px;
     }
 
     .action-buttons {
@@ -256,111 +101,162 @@
     }
 
     .icon-btn {
-      background: rgba(255, 255, 255, 0.5);
-      border: 0.5px solid rgba(255, 255, 255, 0.8);
+      background: rgba(255,255,255,0.7);
+      border: 1px solid #c2dfff;
       color: #0a66b9;
-      width: 44px;
-      height: 44px;
+      width: 40px;
+      height: 40px;
       border-radius: 30px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       font-size: 1.2rem;
-      transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1);
-      backdrop-filter: blur(8px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.02);
+      transition: all 0.2s;
+      backdrop-filter: blur(4px);
     }
 
     .icon-btn:hover {
       background: #0a66b9;
       color: white;
       border-color: #0a66b9;
-      box-shadow: 0 10px 18px rgba(10, 102, 185, 0.2);
-      transform: translateY(-1px);
+      box-shadow: 0 6px 12px rgba(10,102,185,0.2);
     }
 
     .model-tag {
-      margin-top: 8px;
+      margin-top: 6px;
       font-size: 0.8rem;
       color: #2c628b;
       display: flex;
       align-items: center;
       gap: 8px;
-      font-weight: 450;
+    }
+
+    .model-tag i {
+      font-size: 0.7rem;
+      color: #0a66b9;
     }
 
     /* 聊天主体 */
     .chat-main {
       flex: 1;
       overflow-y: auto;
-      padding: 18px 18px 10px 18px;
+      padding: 20px 20px 10px 20px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
       scroll-behavior: smooth;
-      background: transparent;
+      background: rgba(255, 255, 255, 0.3);
     }
 
     /* 消息气泡 */
     .message-row {
       display: flex;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
 
-    .message-row.user { justify-content: flex-end; }
-    .message-row.assistant { justify-content: flex-start; }
+    .message-row.user {
+      justify-content: flex-end;
+    }
+
+    .message-row.assistant {
+      justify-content: flex-start;
+    }
 
     .bubble {
-      max-width: 84%;
-      padding: 14px 20px;
-      border-radius: 26px;
-      box-shadow: 0 6px 12px rgba(0, 30, 60, 0.04);
+      max-width: 82%;
+      padding: 14px 18px;
+      border-radius: 24px;
+      box-shadow: 0 4px 8px rgba(0, 35, 70, 0.04);
       word-break: break-word;
       line-height: 1.5;
-      font-size: 0.96rem;
+      font-size: 0.98rem;
     }
 
     .user .bubble {
       background: #0a66b9;
       color: white;
-      border-bottom-right-radius: 8px;
-      box-shadow: 0 10px 18px rgba(10, 102, 185, 0.18), inset 0 1px 1px rgba(255,255,255,0.2);
+      border-bottom-right-radius: 6px;
+      box-shadow: 0 8px 14px rgba(10, 102, 185, 0.2);
     }
 
     .assistant .bubble {
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      color: #1a3b58;
-      border: 0.5px solid rgba(255, 255, 255, 0.7);
-      border-bottom-left-radius: 8px;
+      background: white;
+      color: #1a344d;
+      border: 1px solid #d9eafb;
+      border-bottom-left-radius: 6px;
     }
 
-    /* Markdown样式 */
-    .assistant .bubble p { margin-bottom: 0.6em; }
-    .assistant .bubble ul, .assistant .bubble ol { padding-left: 1.6em; margin: 0.5em 0; }
-    .assistant .bubble strong { color: #0a4b7a; font-weight: 600; }
-    .assistant .bubble code { background: rgba(10, 102, 185, 0.06); padding: 2px 8px; border-radius: 14px; }
-    .assistant .bubble pre { background: #ecf3fa; padding: 12px; border-radius: 20px; overflow-x: auto; }
+    /* Markdown样式 (仅在assistant气泡内生效) */
+    .assistant .bubble p {
+      margin-bottom: 0.6em;
+    }
+    .assistant .bubble ul, .assistant .bubble ol {
+      padding-left: 1.5em;
+      margin: 0.5em 0;
+    }
+    .assistant .bubble li {
+      margin-bottom: 0.2em;
+    }
+    .assistant .bubble strong {
+      color: #0a4b7a;
+    }
+    .assistant .bubble code {
+      background: #ecf3fa;
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-size: 0.9em;
+      color: #0a3e6d;
+    }
+    .assistant .bubble pre {
+      background: #e3f0fa;
+      padding: 10px;
+      border-radius: 16px;
+      overflow-x: auto;
+    }
 
+    /* 图片在消息中的样式 */
     .message-image {
-      margin-top: 10px;
-      max-width: 220px;
-      border-radius: 20px;
+      margin-top: 8px;
+      max-width: 240px;
+      border-radius: 18px;
       overflow: hidden;
-      border: 2px solid rgba(255, 255, 255, 0.6);
+      border: 2px solid rgba(255,255,255,0.6);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
     }
-    .message-image img { width: 100%; height: auto; display: block; }
+
+    .message-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .user .message-image {
+      border-color: rgba(255,255,255,0.4);
+    }
+
+    .assistant .message-image {
+      border-color: #cde3f5;
+    }
 
     /* 加载动画 */
-    .typing-indicator { display: flex; gap: 6px; padding: 14px 20px; }
+    .typing-indicator {
+      display: flex;
+      gap: 6px;
+      padding: 14px 18px;
+    }
+
     .typing-indicator span {
-      width: 7px; height: 7px; background: #7fa9cc; border-radius: 50%;
+      width: 8px;
+      height: 8px;
+      background: #6fa8d4;
+      border-radius: 50%;
       animation: bounce 1.4s infinite ease-in-out both;
     }
+
     .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
     .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
     @keyframes bounce {
       0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
       40% { transform: scale(1); opacity: 1; }
@@ -368,74 +264,186 @@
 
     /* 输入区域 */
     .chat-footer {
-      padding: 14px 18px 18px 18px;
-      background: rgba(255, 255, 255, 0.35);
-      backdrop-filter: blur(12px);
-      border-top: 0.5px solid rgba(18, 105, 170, 0.08);
+      padding: 16px 20px 20px 20px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid rgba(18, 105, 170, 0.1);
     }
 
-    .preview-area { display: flex; gap: 8px; margin-bottom: 10px; }
+    .preview-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
     .image-preview {
-      display: flex; align-items: center; background: rgba(255,255,255,0.8);
-      border-radius: 40px; padding: 5px 8px 5px 12px; border: 0.5px solid rgba(255,255,255,0.9);
-    }
-    .preview-thumb { width: 44px; height: 44px; border-radius: 14px; object-fit: cover; margin-right: 10px; }
-    .preview-name { font-size: 0.85rem; color: #1e4e77; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
-    .remove-preview { background: none; border: none; color: #6f8fae; margin-left: 8px; cursor: pointer; }
-
-    .input-container { display: flex; align-items: flex-end; gap: 10px; }
-    .input-wrapper {
-      flex: 1; background: rgba(255,255,255,0.85); backdrop-filter: blur(8px);
-      border-radius: 34px; border: 1px solid rgba(255,255,255,0.8);
-      display: flex; padding: 6px 6px 6px 18px;
-    }
-    .input-wrapper:focus-within {
-      border-color: #0a66b9; box-shadow: 0 0 0 5px rgba(10,102,185,0.1);
+      display: flex;
+      align-items: center;
       background: white;
+      border-radius: 40px;
+      padding: 5px 8px 5px 12px;
+      border: 1px solid #cae0f0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
     }
+
+    .preview-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      object-fit: cover;
+      margin-right: 10px;
+      border: 1px solid #e1effa;
+    }
+
+    .preview-name {
+      font-size: 0.85rem;
+      color: #1e4e77;
+      max-width: 120px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .remove-preview {
+      background: none;
+      border: none;
+      color: #6f8fae;
+      margin-left: 8px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 6px;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .remove-preview:hover {
+      background: #f0f7ff;
+      color: #c23b3b;
+    }
+
+    .input-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .input-wrapper {
+      flex: 1;
+      background: white;
+      border-radius: 30px;
+      border: 1.5px solid #cde1f0;
+      display: flex;
+      align-items: flex-end;
+      padding: 8px 8px 8px 18px;
+      transition: border 0.2s, box-shadow 0.2s;
+      backdrop-filter: blur(4px);
+      background: rgba(255,255,255,0.9);
+    }
+
+    .input-wrapper:focus-within {
+      border-color: #0a66b9;
+      box-shadow: 0 0 0 4px rgba(10,102,185,0.15);
+    }
+
     .input-wrapper textarea {
-      flex: 1; border: none; outline: none; resize: none; font-size: 1rem;
-      padding: 10px 0; max-height: 110px; background: transparent; color: #163a5e;
+      flex: 1;
+      border: none;
+      outline: none;
+      resize: none;
+      font-size: 1rem;
+      padding: 8px 0;
+      max-height: 100px;
+      background: transparent;
+      color: #163a5e;
     }
-    .upload-btn { background: transparent; border: none; color: #0a66b9; font-size: 1.5rem; cursor: pointer; }
+
+    .input-wrapper textarea::placeholder {
+      color: #8ba3bc;
+      font-weight: 300;
+    }
+
+    .upload-btn {
+      background: transparent;
+      border: none;
+      color: #0a66b9;
+      font-size: 1.6rem;
+      cursor: pointer;
+      padding: 6px 10px 6px 6px;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+
+    .upload-btn:hover {
+      background: #e1f0fd;
+    }
+
     .send-btn {
-      background: #0a66b9; color: white; border: none; width: 56px; height: 56px;
-      border-radius: 32px; font-size: 1.4rem; cursor: pointer;
-      box-shadow: 0 10px 18px rgba(10,102,185,0.2);
+      background: #0a66b9;
+      color: white;
+      border: none;
+      width: 54px;
+      height: 54px;
+      border-radius: 30px;
+      font-size: 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 8px 16px rgba(10,102,185,0.25);
       transition: all 0.2s;
+      border: 1px solid rgba(255,255,255,0.3);
     }
-    .send-btn:hover { background: #095193; transform: scale(1.02); }
 
-    .sys-note { font-size: 0.7rem; color: #3e6e97; margin-top: 10px; text-align: center; opacity: 0.75; }
+    .send-btn:hover {
+      background: #095193;
+      transform: scale(1.02);
+      box-shadow: 0 10px 20px rgba(10,102,185,0.35);
+    }
 
-    /* 移动端适配 */
-    @media (max-width: 480px) {
-      body { padding: 6px; }
-      .glass-card { height: 88vh; border-radius: 32px; }
-      .bubble { max-width: 88%; padding: 12px 16px; }
-      .title-text h1 { font-size: 1.7rem; }
-      .history-drawer { width: 260px; }
+    .send-btn:disabled {
+      opacity: 0.5;
+      pointer-events: none;
+      box-shadow: none;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* 提示信息 */
+    .sys-note {
+      font-size: 0.7rem;
+      color: #3e6e97;
+      margin-top: 8px;
+      text-align: center;
+      opacity: 0.8;
+    }
+
+    /* 滚动条 */
+    .chat-main::-webkit-scrollbar {
+      width: 6px;
+    }
+    .chat-main::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .chat-main::-webkit-scrollbar-thumb {
+      background: #b8d4ed;
+      border-radius: 20px;
     }
   </style>
 </head>
 <body>
 <div class="glass-card">
-  <!-- 历史抽屉 -->
-  <div class="history-drawer" id="historyDrawer">
-    <div class="drawer-header">
-      <h3><i class="far fa-clock" style="margin-right: 6px;"></i>历史对话</h3>
-      <button class="close-drawer-btn" id="closeDrawerBtn"><i class="fas fa-times"></i></button>
-    </div>
-    <button class="save-current-btn" id="saveCurrentChatBtn">
-      <i class="far fa-save"></i> 临时保存当前对话
-    </button>
-    <div class="history-list" id="historyListContainer">
-      <!-- 动态渲染历史列表 -->
-      <div class="empty-history">暂无临时保存的对话</div>
-    </div>
-  </div>
-
-  <!-- 主界面 -->
+  <!-- 头部 -->
   <div class="chat-header">
     <div class="header-top">
       <div class="title-section">
@@ -448,19 +456,23 @@
         </div>
       </div>
       <div class="action-buttons">
-        <button class="icon-btn" id="historyBtn" title="历史对话"><i class="far fa-clock"></i></button>
         <button class="icon-btn" id="clearChatBtn" title="新对话"><i class="fas fa-broom"></i></button>
       </div>
     </div>
     <div class="model-tag">
       <i class="fas fa-brain"></i> 模型: 鉴糖镜·基于Qwen-vl-Max
-      <span style="margin-left: auto; font-size:0.75rem; opacity:0.7;"><i class="far fa-lock"></i> Powered by PakePlus</span>
+      <span style="margin-left: auto; font-size:0.75rem; opacity:0.7;"> @Powered by PakePlus</span>
     </div>
   </div>
 
-  <div class="chat-main" id="chatContainer"></div>
+  <!-- 聊天消息区域 -->
+  <div class="chat-main" id="chatContainer">
+    <!-- 动态消息会渲染到这里 -->
+  </div>
 
+  <!-- 底部输入区 -->
   <div class="chat-footer">
+    <!-- 图片预览条 -->
     <div class="preview-area" id="previewArea">
       <div class="image-preview" id="imagePreviewContainer" style="display: none;">
         <img class="preview-thumb" id="previewImg" src="" alt="预览">
@@ -468,16 +480,17 @@
         <button class="remove-preview" id="removeImageBtn"><i class="fas fa-times"></i></button>
       </div>
     </div>
+
     <div class="input-container">
       <div class="input-wrapper">
-        <textarea id="messageInput" placeholder="描述伤口情况，或上传图片..." rows="1"></textarea>
+        <textarea id="messageInput" placeholder="描述视部情况，或上传图片..." rows="1"></textarea>
         <input type="file" id="imageUpload" accept="image/*" style="display: none;">
-        <button class="upload-btn" id="uploadBtn" title="上传伤口图片"><i class="far fa-image"></i></button>
+        <button class="upload-btn" id="uploadBtn" title="上传视部图片"><i class="far fa-image"></i></button>
       </div>
       <button class="send-btn" id="sendBtn"><i class="fas fa-arrow-up"></i></button>
     </div>
     <div class="sys-note">
-      <i class="fas fa-stethoscope"></i> 内置Wagner分级知识库 · 仅供参考
+      <i class="fas fa-stethoscope"></i> 内置Wagner分级知识库 · 所有建议仅供参考，请及时就医
     </div>
   </div>
 </div>
@@ -486,21 +499,27 @@
   (function(){
     "use strict";
 
-    // ---------- 配置 ----------
+    // ---------- 固定配置 (仅源码可修改，用户不可见不可编辑) ----------
+    // ！！！重要：请在此处填写您的通义千问API Key (DashScope)
     const API_KEY = 'sk-0db94b7d7557462dbd4be86c82933572';  // 👈 替换为你的API Key
-    const MODEL_NAME = 'qwen-vl-max';
+    
+    // 模型名称 (视觉模型，兼容Qwen3-vl / qwen-vl-plus)
+    const MODEL_NAME = 'qwen-vl-max';   // 也可用 qwen-vl-max, qwen2.5-vl-72b-instruct
+    
+    // API 端点 (兼容OpenAI格式)
     const API_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
 
+    // ---------- 🔒 内置知识库 & 系统提示词 (仅源码可见，用户不可修改) ----------
     const SYSTEM_PROMPT = `
 你是一名专业的糖尿病伤口评估助手，名为“鉴糖镜”。你的核心知识库已内置如下，请严格基于此知识库并结合用户上传的图片与描述进行专业分析。
 
 【内置知识库——糖尿病伤口Wagner分级及护理】
-- 0级：有发生溃疡的危险因素，但目前无溃疡。
-- 1级：伤口表浅溃疡，无感染。
+- 0级：有发生伤口溃疡的危险因素，但目前无溃疡。
+- 1级：伤口部表浅溃疡，无感染。
 - 2级：较深的溃疡，常合并软组织感染，但无脓肿或骨髓炎。
 - 3级：深部溃疡，伴有脓肿或骨髓炎。
 - 4级：局限性坏疽。
-- 5级：全部位坏疽。
+- 5级：完全坏疽。
 
 【芒果苷敷贴适用性分析规则】
 **仅在判断分级等于低于3级时执行该项规则**
@@ -526,8 +545,8 @@
 `.trim();
 
     // ---------- 全局变量 ----------
-    let messages = [];                     // 当前对话
-    let currentImageBase64 = null;
+    let messages = [];                     // 存储对话 { role, content, image? }
+    let currentImageBase64 = null;         // 当前待发送图片 (含 data:image/...;base64)
     let currentImageFileName = '';
     let isLoading = false;
 
@@ -537,199 +556,113 @@
     const sendBtn = document.getElementById('sendBtn');
     const uploadBtn = document.getElementById('uploadBtn');
     const imageUpload = document.getElementById('imageUpload');
+    const previewArea = document.getElementById('previewArea');
     const imagePreviewContainer = document.getElementById('imagePreviewContainer');
     const previewImg = document.getElementById('previewImg');
     const previewFileName = document.getElementById('previewFileName');
     const removeImageBtn = document.getElementById('removeImageBtn');
     const clearChatBtn = document.getElementById('clearChatBtn');
-    const historyBtn = document.getElementById('historyBtn');
-    const historyDrawer = document.getElementById('historyDrawer');
-    const closeDrawerBtn = document.getElementById('closeDrawerBtn');
-    const saveCurrentChatBtn = document.getElementById('saveCurrentChatBtn');
-    const historyListContainer = document.getElementById('historyListContainer');
 
-    // ---------- 历史记录管理 (localStorage) ----------
-    let chatHistory = [];   // 数组，元素: { id, title, timestamp, messages }
-
-    function loadHistoryFromStorage() {
-      const stored = localStorage.getItem('tangzujing_history');
-      if (stored) {
-        try { chatHistory = JSON.parse(stored); } catch(e){ chatHistory = []; }
-      }
-      renderHistoryList();
-    }
-    function saveHistoryToStorage() {
-      localStorage.setItem('tangzujing_history', JSON.stringify(chatHistory));
-    }
-
-    // 生成日期标题：2026-04-11 15:30
-    function getFormattedDate() {
-      const d = new Date();
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2,'0');
-      const day = String(d.getDate()).padStart(2,'0');
-      const hours = String(d.getHours()).padStart(2,'0');
-      const mins = String(d.getMinutes()).padStart(2,'0');
-      return `${year}-${month}-${day} ${hours}:${mins}`;
-    }
-
-    // 获取首条用户消息作为预览
-    function getPreviewFromMessages(msgs) {
-      for (let m of msgs) {
-        if (m.role === 'user' && m.content) return m.content.substring(0, 30) + (m.content.length > 30 ? '…' : '');
-      }
-      return '无消息内容';
-    }
-
-    // 渲染历史列表
-    function renderHistoryList() {
-      if (!historyListContainer) return;
-      if (chatHistory.length === 0) {
-        historyListContainer.innerHTML = '<div class="empty-history"><i class="far fa-folder-open"></i> 暂无临时保存的对话</div>';
-        return;
-      }
-      let html = '';
-      // 按时间倒序
-      const sorted = [...chatHistory].sort((a,b) => b.timestamp - a.timestamp);
-      sorted.forEach(item => {
-        const preview = getPreviewFromMessages(item.messages);
-        html += `
-          <div class="history-item" data-id="${item.id}">
-            <div class="history-title"><i class="far fa-calendar-alt"></i> ${item.title}</div>
-            <div class="history-preview">${escapeHtml(preview)}</div>
-            <div class="history-actions">
-              <button class="load-history-btn" data-id="${item.id}"><i class="fas fa-folder-open"></i> 加载</button>
-              <button class="delete-history-btn" data-id="${item.id}"><i class="fas fa-trash-alt"></i> 删除</button>
-            </div>
-          </div>
-        `;
-      });
-      historyListContainer.innerHTML = html;
-      // 绑定事件
-      document.querySelectorAll('.load-history-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const id = btn.dataset.id;
-          loadConversationById(id);
-          closeDrawer();
-        });
-      });
-      document.querySelectorAll('.delete-history-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const id = btn.dataset.id;
-          deleteConversationById(id);
-        });
-      });
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    // 临时保存当前对话
-    function saveCurrentConversation() {
-      if (messages.length === 0 || (messages.length === 1 && messages[0].role === 'assistant')) {
-        alert('没有可临时保存的对话内容');
-        return;
-      }
-      const title = getFormattedDate();
-      const newRecord = {
-        id: Date.now() + '' + Math.floor(Math.random()*1000),
-        title: title,
-        timestamp: Date.now(),
-        messages: JSON.parse(JSON.stringify(messages)) // 深拷贝
-      };
-      chatHistory.push(newRecord);
-      saveHistoryToStorage();
-      renderHistoryList();
-      // 提示
-      alert(`已临时保存：${title}`);
-    }
-
-    function loadConversationById(id) {
-      const record = chatHistory.find(r => r.id === id);
-      if (!record) return;
-      messages = JSON.parse(JSON.stringify(record.messages));
-      renderMessages();
-      clearImagePreview();
-      messageInput.value = '';
-    }
-
-    function deleteConversationById(id) {
-      chatHistory = chatHistory.filter(r => r.id !== id);
-      saveHistoryToStorage();
-      renderHistoryList();
-    }
-
-    function openDrawer() { historyDrawer.classList.add('open'); }
-    function closeDrawer() { historyDrawer.classList.remove('open'); }
-
-    // ---------- 聊天渲染与逻辑 ----------
+    // ---------- 初始化欢迎消息 ----------
     function initChat() {
       const welcomeMsg = {
         role: 'assistant',
-        content: '🧐 您好，我鉴糖镜。请描述伤口情况或上传伤口照片，我将基于Wagner分级知识库为您提供初步评估与护理建议。\n\n⚠️ 本工具仅供辅助参考，不能替代医生诊断。'
+        content: '🧐 您好，我是鉴糖镜。请描述视部情况或上传视部照片，我将基于Wagner分级知识库为您提供初步评估与护理建议。\n\n⚠️ 本工具仅供辅助参考，不能替代医生诊断。'
       };
       messages = [welcomeMsg];
       renderMessages();
     }
 
+    // 渲染消息列表 (关键修改：助手消息使用marked解析)
     function renderMessages() {
       if (!chatContainer) return;
       let html = '';
-      messages.forEach((msg) => {
+      messages.forEach((msg, index) => {
         const isUser = msg.role === 'user';
         const bubbleClass = isUser ? 'user' : 'assistant';
         let contentHtml = '';
+        
         if (isUser) {
+          // 用户消息：纯文本转义，保留图片
           const text = msg.content || '';
           const escapedText = escapeHtml(text).replace(/\n/g, '<br>');
           if (msg.image) {
             contentHtml = `
               <div class="bubble">
                 ${escapedText ? `<div>${escapedText}</div>` : ''}
-                <div class="message-image"><img src="${escapeHtml(msg.image)}" alt="上传图片"></div>
-              </div>`;
+                <div class="message-image">
+                  <img src="${escapeHtml(msg.image)}" alt="上传图片">
+                </div>
+              </div>
+            `;
           } else {
             contentHtml = `<div class="bubble">${escapedText}</div>`;
           }
         } else {
+          // 助手消息：使用marked解析Markdown (安全起见，marked默认处理XSS)
           let markdownText = msg.content || '';
           let parsedHtml = '';
           try {
-            marked.setOptions({ breaks: true, gfm: true });
+            // 配置marked选项 (可选)
+            marked.setOptions({
+              breaks: true,     // 支持换行转换为<br>
+              gfm: true,        // 支持GitHub风格Markdown
+            });
             parsedHtml = marked.parse(markdownText);
           } catch (e) {
+            console.warn('Markdown解析失败，回退到纯文本', e);
             parsedHtml = escapeHtml(markdownText).replace(/\n/g, '<br>');
           }
+          
           contentHtml = `<div class="bubble">${parsedHtml}</div>`;
         }
+        
         html += `<div class="message-row ${bubbleClass}">${contentHtml}</div>`;
       });
+      
+      // 加载指示器
       if (isLoading) {
-        html += `<div class="message-row assistant"><div class="bubble typing-indicator"><span></span><span></span><span></span></div></div>`;
+        html += `
+          <div class="message-row assistant">
+            <div class="bubble typing-indicator">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        `;
       }
+      
       chatContainer.innerHTML = html;
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
+    // 简单转义 (用于用户消息)
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // 添加消息
     function addMessage(role, content, imageBase64 = null) {
       messages.push({ role, content, image: imageBase64 });
       renderMessages();
     }
 
+    // 更新加载状态
     function setLoading(loading) {
       isLoading = loading;
       renderMessages();
       sendBtn.disabled = loading;
       messageInput.disabled = loading;
       uploadBtn.disabled = loading;
-      messageInput.placeholder = loading ? '鉴糖镜思考中...' : '描述伤口情况，或上传图片...';
+      if (loading) {
+        messageInput.setAttribute('placeholder', '鉴糖镜思考中...');
+      } else {
+        messageInput.setAttribute('placeholder', '描述视部情况，或上传图片...');
+      }
     }
 
+    // 清空图片预览
     function clearImagePreview() {
       currentImageBase64 = null;
       currentImageFileName = '';
@@ -738,104 +671,165 @@
       imageUpload.value = '';
     }
 
+    // 显示图片预览
     function setImagePreview(base64, fileName) {
       currentImageBase64 = base64;
       currentImageFileName = fileName || '图片';
       previewImg.src = base64;
-      previewFileName.textContent = fileName || '伤口图片';
+      previewFileName.textContent = fileName || '视部图片';
       imagePreviewContainer.style.display = 'flex';
     }
 
-    function isValidApiKey(key) { return /^[\x00-\x7F]+$/.test(key); }
-
+    // ---------- 调用千问API (视觉) ----------
     async function callQwenVision() {
-      if (!API_KEY || API_KEY.includes('xxxxxxxx')) { alert('请配置API Key'); return null; }
-      if (!isValidApiKey(API_KEY)) { alert('API Key含非法字符'); return null; }
+      if (!API_KEY || API_KEY.includes('xxxxxxxx')) {
+        alert('❌ 请先在代码中配置有效的 API_KEY (DashScope)');
+        return null;
+      }
 
-      const apiMessages = [{ role: 'system', content: SYSTEM_PROMPT }];
+      const apiMessages = [
+        { role: 'system', content: SYSTEM_PROMPT }
+      ];
+
       for (const msg of messages) {
         if (msg.role === 'user') {
           if (msg.image) {
-            apiMessages.push({ role: 'user', content: [
-              { type: 'image_url', image_url: { url: msg.image } },
-              { type: 'text', text: msg.content || '请分析这张图片' }
-            ]});
-          } else { apiMessages.push({ role: 'user', content: msg.content }); }
-        } else if (msg.role === 'assistant') { apiMessages.push({ role: 'assistant', content: msg.content }); }
+            apiMessages.push({
+              role: 'user',
+              content: [
+                { type: 'image_url', image_url: { url: msg.image } },
+                { type: 'text', text: msg.content || '请分析这张图片' }
+              ]
+            });
+          } else {
+            apiMessages.push({ role: 'user', content: msg.content });
+          }
+        } else if (msg.role === 'assistant') {
+          apiMessages.push({ role: 'assistant', content: msg.content });
+        }
       }
 
-      const headers = new Headers();
-      headers.append('Content-Type', 'application/json');
-      headers.append('Authorization', `Bearer ${API_KEY}`);
-      const resp = await fetch(API_URL, {
-        method: 'POST', headers,
-        body: JSON.stringify({ model: MODEL_NAME, messages: apiMessages, temperature: 0.3, max_tokens: 1200 })
-      });
-      if (!resp.ok) throw new Error(`API错误 ${resp.status}`);
-      const data = await resp.json();
-      return data.choices?.[0]?.message?.content || '';
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${API_KEY}`
+          },
+          body: JSON.stringify({
+            model: MODEL_NAME,
+            messages: apiMessages,
+            temperature: 0.3,
+            max_tokens: 1200
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error('API错误:', errorData);
+          throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const reply = data.choices?.[0]?.message?.content;
+        if (!reply) throw new Error('未获取到有效回复');
+        return reply;
+      } catch (error) {
+        console.error('调用千问API出错:', error);
+        throw error;
+      }
     }
 
+    // 发送消息主逻辑
     async function handleSendMessage() {
       if (isLoading) return;
+      
       const text = messageInput.value.trim();
       if (!text && !currentImageBase64) return;
-      addMessage('user', text || '', currentImageBase64);
+
+      if (!API_KEY || API_KEY.startsWith('sk-xxxx')) {
+        alert('⚠️ 请打开源码，将 API_KEY 变量替换为你的通义千问API Key (DashScope)');
+        return;
+      }
+
+      const userContent = text || '';
+      addMessage('user', userContent, currentImageBase64);
+      
       messageInput.value = '';
       clearImagePreview();
       messageInput.style.height = 'auto';
+      
       setLoading(true);
+
       try {
         const reply = await callQwenVision();
         addMessage('assistant', reply);
       } catch (err) {
-        addMessage('assistant', `⚠️ 服务不可用：${err.message}`);
-      } finally { setLoading(false); }
-    }
-
-    // 新对话（清空）
-    function newConversation() {
-      if (isLoading) return;
-      messages = [{
-        role: 'assistant',
-        content: '🧐 您好，我鉴糖镜。请描述伤口情况或上传伤口照片，我将基于Wagner分级知识库为您提供初步评估与护理建议。\n\n⚠️ 本工具仅供辅助参考，不能替代医生诊断。'
-      }];
-      clearImagePreview();
-      messageInput.value = '';
-      renderMessages();
+        addMessage('assistant', `⚠️ 服务暂时不可用：${err.message}\n\n请稍后重试，或检查API Key/网络。`);
+      } finally {
+        setLoading(false);
+      }
     }
 
     // ---------- 事件绑定 ----------
     sendBtn.addEventListener('click', handleSendMessage);
-    messageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); }});
-    messageInput.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 110) + 'px'; });
-    uploadBtn.addEventListener('click', () => imageUpload.click());
-    imageUpload.addEventListener('change', (e) => {
-      const file = e.target.files[0]; if (!file) return;
-      if (!file.type.startsWith('image/')) { alert('请选择图片'); return; }
-      const reader = new FileReader();
-      reader.onload = (ev) => setImagePreview(ev.target.result, file.name);
-      reader.readAsDataURL(file);
-    });
-    removeImageBtn.addEventListener('click', clearImagePreview);
-    clearChatBtn.addEventListener('click', newConversation);
 
-    // 历史抽屉
-    historyBtn.addEventListener('click', (e) => { e.stopPropagation(); openDrawer(); });
-    closeDrawerBtn.addEventListener('click', closeDrawer);
-    saveCurrentChatBtn.addEventListener('click', () => { saveCurrentConversation(); });
-
-    // 点击抽屉外部关闭（简单处理）
-    document.addEventListener('click', (e) => {
-      if (!historyDrawer.contains(e.target) && e.target !== historyBtn && !historyBtn.contains(e.target)) {
-        closeDrawer();
+    messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage();
       }
     });
 
-    // 初始化
-    loadHistoryFromStorage();
+    messageInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    uploadBtn.addEventListener('click', () => {
+      imageUpload.click();
+    });
+
+    imageUpload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      if (!file.type.startsWith('image/')) {
+        alert('请选择图片文件');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const base64 = ev.target.result;
+        setImagePreview(base64, file.name);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    removeImageBtn.addEventListener('click', () => {
+      clearImagePreview();
+    });
+
+    clearChatBtn.addEventListener('click', () => {
+      if (isLoading) return;
+      messages = [];
+      const welcomeMsg = {
+        role: 'assistant',
+        content: '🧐 您好，我是鉴糖镜。请描述视部情况或上传视部照片，我将基于Wagner分级知识库为您提供初步评估与护理建议。\n\n⚠️ 本工具仅供辅助参考，不能替代医生诊断。'
+      };
+      messages.push(welcomeMsg);
+      clearImagePreview();
+      messageInput.value = '';
+      renderMessages();
+    });
+
+    // 启动
     initChat();
-    if (!API_KEY || API_KEY.includes('xxx')) console.warn('请设置API Key');
+    
+    if (!API_KEY || API_KEY.includes('xxx')) {
+      console.warn('鉴糖镜: 请在源码中设置有效的 API_KEY (第118行附近)');
+    }
   })();
 </script>
 </body>
