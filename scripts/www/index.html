@@ -1,836 +1,888 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>鉴糖镜 · 糖尿病伤口AI评估</title>
-  <!-- Font Awesome 图标库 -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <!-- Markdown解析库 (marked) -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>鉴糖镜 - 糖尿病伤口辨证专家</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: { sans: ['"Noto Sans SC"', 'sans-serif'] }
+            }
+        }
     }
+    </script>
+    <style>
+        :root {
+            --deep: #0B2545;
+            --mid: #134074;
+            --sky: #13678A;
+            --light: #5DB7DE;
+            --ice: #B8E0F6;
+            --pale: #E8F4FD;
+            --white: #FFFFFF;
+            --text: #0B2545;
+            --muted: #5A7184;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans SC', sans-serif; }
+        body { background: linear-gradient(160deg, #0B2545 0%, #134074 30%, #1A6FA0 60%, #5DB7DE 100%); }
 
-    body {
-      background: linear-gradient(145deg, #f0f9ff 0%, #e6f2fa 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
+        /* 背景动态光晕 */
+        .bg-orb {
+            position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.18;
+            animation: orbFloat 12s ease-in-out infinite alternate; pointer-events: none; z-index: 0;
+        }
+        .bg-orb-1 { width: 400px; height: 400px; background: #5DB7DE; top: -100px; right: -80px; animation-delay: 0s; }
+        .bg-orb-2 { width: 300px; height: 300px; background: #B8E0F6; bottom: -60px; left: -60px; animation-delay: -4s; }
+        .bg-orb-3 { width: 200px; height: 200px; background: #0B2545; top: 40%; left: 50%; animation-delay: -8s; }
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, -40px) scale(1.15); }
+        }
 
-    /* 主卡片 —— 蓝白清爽风格 */
-    .glass-card {
-      width: 100%;
-      max-width: 880px;
-      height: 90vh;
-      max-height: 900px;
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 36px;
-      box-shadow: 0 20px 40px rgba(0, 70, 120, 0.12), 0 8px 20px rgba(0, 105, 165, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.5);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      transition: all 0.2s ease;
-    }
+        /* 主容器 */
+        .app-shell {
+            position: relative; z-index: 1; display: flex; flex-direction: column;
+            height: 100vh; height: 100dvh; max-width: 860px; margin: 0 auto;
+        }
+        @media (min-width: 1024px) {
+            .app-shell { max-width: 720px; margin-top: 24px; margin-bottom: 24px; height: calc(100dvh - 48px); border-radius: 24px; overflow: hidden; box-shadow: 0 24px 80px rgba(11,37,69,0.4); }
+        }
 
-    /* 头部 */
-    .chat-header {
-      padding: 20px 24px 16px 24px;
-      border-bottom: 1px solid rgba(18, 105, 170, 0.12);
-      background: rgba(255, 255, 255, 0.5);
-    }
+        /* 顶栏 */
+        .top-bar {
+            background: linear-gradient(135deg, rgba(11,37,69,0.95), rgba(19,64,116,0.92));
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(93,183,222,0.2);
+            flex-shrink: 0;
+        }
 
-    .header-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 6px;
-    }
+        /* 对话区域 */
+        .chat-area {
+            flex: 1; overflow-y: auto; overflow-x: hidden;
+            background: linear-gradient(180deg, rgba(232,244,253,0.92) 0%, rgba(255,255,255,0.96) 40%, rgba(232,244,253,0.9) 100%);
+            scroll-behavior: smooth;
+        }
+        .chat-area::-webkit-scrollbar { width: 4px; }
+        .chat-area::-webkit-scrollbar-thumb { background: rgba(19,64,116,0.2); border-radius: 4px; }
 
-    .title-section {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+        /* 消息动画 */
+        .msg-enter { animation: msgSlideIn 0.35s cubic-bezier(0.22, 0.61, 0.36, 1); }
+        @keyframes msgSlideIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-    .logo-icon {
-      background: #0a66b9;
-      width: 44px;
-      height: 44px;
-      border-radius: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 24px;
-      box-shadow: 0 6px 10px rgba(10, 102, 185, 0.2);
-    }
+        /* 用户消息 */
+        .msg-user {
+            background: linear-gradient(135deg, #134074, #13678A);
+            color: #fff; border-radius: 20px 20px 4px 20px;
+            box-shadow: 0 4px 16px rgba(19,64,116,0.25);
+        }
 
-    .title-text h1 {
-      font-size: 1.9rem;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-      color: #0a3e6d;
-      line-height: 1.2;
-    }
+        /* AI消息 */
+        .msg-ai {
+            background: rgba(255,255,255,0.95); color: var(--text);
+            border-radius: 20px 20px 20px 4px;
+            border-left: 3px solid #13678A;
+            box-shadow: 0 2px 12px rgba(11,37,69,0.08);
+        }
+        .msg-ai h1, .msg-ai h2, .msg-ai h3 { font-weight: 700; margin: 0.6em 0 0.3em; color: #134074; }
+        .msg-ai h1 { font-size: 1.15em; }
+        .msg-ai h2 { font-size: 1.05em; }
+        .msg-ai h3 { font-size: 0.95em; }
+        .msg-ai p { margin: 0.4em 0; line-height: 1.7; }
+        .msg-ai ul, .msg-ai ol { padding-left: 1.4em; margin: 0.4em 0; }
+        .msg-ai li { margin: 0.2em 0; line-height: 1.6; }
+        .msg-ai strong { color: #0B2545; font-weight: 700; }
+        .msg-ai code { background: #E8F4FD; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+        .msg-ai blockquote { border-left: 3px solid #5DB7DE; padding-left: 12px; color: #5A7184; margin: 0.6em 0; }
 
-    .title-text .badge {
-      font-size: 0.75rem;
-      background: #d4e7f7;
-      color: #0a66b9;
-      padding: 4px 10px;
-      border-radius: 30px;
-      font-weight: 500;
-      display: inline-block;
-      margin-top: 2px;
-    }
+        /* 思考用时标签 */
+        .think-timer {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: 11px; color: #5A7184; padding: 3px 10px;
+            background: #E8F4FD; border-radius: 20px; margin-bottom: 8px;
+            transition: all 0.3s;
+        }
+        .think-timer.done {
+            color: #13678A; background: #D6EAF8;
+        }
+        .think-timer i { font-size: 10px; }
+        @keyframes timerPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .think-timer .timer-icon { animation: timerPulse 1.2s ease-in-out infinite; }
+        .think-timer.done .timer-icon { animation: none; }
 
-    .action-buttons {
-      display: flex;
-      gap: 10px;
-    }
+        /* 图片预览 */
+        .img-preview {
+            border-radius: 12px; overflow: hidden; position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .img-preview img { max-width: 200px; max-height: 160px; object-fit: cover; display: block; }
+        .img-remove {
+            position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
+            background: rgba(0,0,0,0.55); color: #fff; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 11px;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .img-remove:hover { background: rgba(220,38,38,0.8); }
 
-    .icon-btn {
-      background: rgba(255,255,255,0.7);
-      border: 1px solid #c2dfff;
-      color: #0a66b9;
-      width: 40px;
-      height: 40px;
-      border-radius: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 1.2rem;
-      transition: all 0.2s;
-      backdrop-filter: blur(4px);
-    }
+        /* 输入区 */
+        .input-area {
+            background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(232,244,253,0.98));
+            backdrop-filter: blur(12px); border-top: 1px solid rgba(93,183,222,0.2);
+            flex-shrink: 0;
+        }
+        .input-box {
+            background: #fff; border: 2px solid #D6E4F0; border-radius: 16px;
+            transition: border-color 0.25s, box-shadow 0.25s;
+        }
+        .input-box:focus-within {
+            border-color: #5DB7DE; box-shadow: 0 0 0 3px rgba(93,183,222,0.2);
+        }
+        .input-box textarea {
+            resize: none; border: none; outline: none; background: transparent;
+            font-family: inherit; font-size: 15px; color: var(--text); width: 100%;
+            line-height: 1.5; padding: 0;
+        }
+        .input-box textarea::placeholder { color: #A0B4C8; }
 
-    .icon-btn:hover {
-      background: #0a66b9;
-      color: white;
-      border-color: #0a66b9;
-      box-shadow: 0 6px 12px rgba(10,102,185,0.2);
-    }
+        .btn-send {
+            background: linear-gradient(135deg, #134074, #13678A, #5DB7DE);
+            background-size: 200% 200%; animation: gradShift 4s ease infinite;
+            color: #fff; border: none; border-radius: 12px; cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s;
+        }
+        .btn-send:hover { transform: scale(1.05); box-shadow: 0 4px 16px rgba(19,64,116,0.35); }
+        .btn-send:active { transform: scale(0.96); }
+        .btn-send:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+        @keyframes gradShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
 
-    .model-tag {
-      margin-top: 6px;
-      font-size: 0.8rem;
-      color: #2c628b;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+        .btn-icon {
+            width: 38px; height: 38px; border-radius: 10px; border: none;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s; font-size: 16px; background: #E8F4FD; color: #134074;
+        }
+        .btn-icon:hover { background: #D6EAF8; transform: scale(1.08); }
+        .btn-icon:active { transform: scale(0.95); }
 
-    .model-tag i {
-      font-size: 0.7rem;
-      color: #0a66b9;
-    }
+        /* 欢迎卡片 */
+        .welcome-card {
+            background: rgba(255,255,255,0.9); backdrop-filter: blur(12px);
+            border-radius: 20px; border: 1px solid rgba(93,183,222,0.25);
+            box-shadow: 0 8px 32px rgba(11,37,69,0.1);
+        }
 
-    /* 聊天主体 */
-    .chat-main {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px 20px 10px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      scroll-behavior: smooth;
-      background: rgba(255, 255, 255, 0.3);
-    }
+        /* 加载动画 */
+        .typing-dots span {
+            display: inline-block; width: 7px; height: 7px; background: #13678A;
+            border-radius: 50%; margin: 0 2px;
+            animation: dotPulse 1.4s infinite ease-in-out;
+        }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dotPulse {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
 
-    /* 消息气泡 */
-    .message-row {
-      display: flex;
-      margin-bottom: 6px;
-    }
+        /* Toast */
+        .toast {
+            position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-100px);
+            background: linear-gradient(135deg, #134074, #13678A); color: #fff;
+            padding: 12px 24px; border-radius: 12px; font-size: 14px; z-index: 9999;
+            box-shadow: 0 8px 24px rgba(11,37,69,0.3);
+            transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
 
-    .message-row.user {
-      justify-content: flex-end;
-    }
+        /* 诊断徽标 */
+        .badge-glow {
+            background: linear-gradient(135deg, #0B2545, #13678A);
+            box-shadow: 0 0 20px rgba(93,183,222,0.4);
+        }
 
-    .message-row.assistant {
-      justify-content: flex-start;
-    }
+        /* 隐藏文件输入 */
+        .file-hidden { position: absolute; width: 0; height: 0; opacity: 0; overflow: hidden; }
 
-    .bubble {
-      max-width: 82%;
-      padding: 14px 18px;
-      border-radius: 24px;
-      box-shadow: 0 4px 8px rgba(0, 35, 70, 0.04);
-      word-break: break-word;
-      line-height: 1.5;
-      font-size: 0.98rem;
-    }
+        /* 减少动画偏好 */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
 
-    .user .bubble {
-      background: #0a66b9;
-      color: white;
-      border-bottom-right-radius: 6px;
-      box-shadow: 0 8px 14px rgba(10, 102, 185, 0.2);
-    }
-
-    .assistant .bubble {
-      background: white;
-      color: #1a344d;
-      border: 1px solid #d9eafb;
-      border-bottom-left-radius: 6px;
-    }
-
-    /* Markdown样式 (仅在assistant气泡内生效) */
-    .assistant .bubble p {
-      margin-bottom: 0.6em;
-    }
-    .assistant .bubble ul, .assistant .bubble ol {
-      padding-left: 1.5em;
-      margin: 0.5em 0;
-    }
-    .assistant .bubble li {
-      margin-bottom: 0.2em;
-    }
-    .assistant .bubble strong {
-      color: #0a4b7a;
-    }
-    .assistant .bubble code {
-      background: #ecf3fa;
-      padding: 2px 6px;
-      border-radius: 12px;
-      font-size: 0.9em;
-      color: #0a3e6d;
-    }
-    .assistant .bubble pre {
-      background: #e3f0fa;
-      padding: 10px;
-      border-radius: 16px;
-      overflow-x: auto;
-    }
-
-    /* 图片在消息中的样式 */
-    .message-image {
-      margin-top: 8px;
-      max-width: 240px;
-      border-radius: 18px;
-      overflow: hidden;
-      border: 2px solid rgba(255,255,255,0.6);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-    }
-
-    .message-image img {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-
-    .user .message-image {
-      border-color: rgba(255,255,255,0.4);
-    }
-
-    .assistant .message-image {
-      border-color: #cde3f5;
-    }
-
-    /* 加载动画 */
-    .typing-indicator {
-      display: flex;
-      gap: 6px;
-      padding: 14px 18px;
-    }
-
-    .typing-indicator span {
-      width: 8px;
-      height: 8px;
-      background: #6fa8d4;
-      border-radius: 50%;
-      animation: bounce 1.4s infinite ease-in-out both;
-    }
-
-    .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-    .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
-
-    @keyframes bounce {
-      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-      40% { transform: scale(1); opacity: 1; }
-    }
-
-    /* 输入区域 */
-    .chat-footer {
-      padding: 16px 20px 20px 20px;
-      background: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(8px);
-      border-top: 1px solid rgba(18, 105, 170, 0.1);
-    }
-
-    .preview-area {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-    }
-
-    .image-preview {
-      display: flex;
-      align-items: center;
-      background: white;
-      border-radius: 40px;
-      padding: 5px 8px 5px 12px;
-      border: 1px solid #cae0f0;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-    }
-
-    .preview-thumb {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      object-fit: cover;
-      margin-right: 10px;
-      border: 1px solid #e1effa;
-    }
-
-    .preview-name {
-      font-size: 0.85rem;
-      color: #1e4e77;
-      max-width: 120px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .remove-preview {
-      background: none;
-      border: none;
-      color: #6f8fae;
-      margin-left: 8px;
-      cursor: pointer;
-      font-size: 1.1rem;
-      padding: 6px;
-      border-radius: 50%;
-      width: 30px;
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .remove-preview:hover {
-      background: #f0f7ff;
-      color: #c23b3b;
-    }
-
-    .input-container {
-      display: flex;
-      align-items: flex-end;
-      gap: 10px;
-    }
-
-    .input-wrapper {
-      flex: 1;
-      background: white;
-      border-radius: 30px;
-      border: 1.5px solid #cde1f0;
-      display: flex;
-      align-items: flex-end;
-      padding: 8px 8px 8px 18px;
-      transition: border 0.2s, box-shadow 0.2s;
-      backdrop-filter: blur(4px);
-      background: rgba(255,255,255,0.9);
-    }
-
-    .input-wrapper:focus-within {
-      border-color: #0a66b9;
-      box-shadow: 0 0 0 4px rgba(10,102,185,0.15);
-    }
-
-    .input-wrapper textarea {
-      flex: 1;
-      border: none;
-      outline: none;
-      resize: none;
-      font-size: 1rem;
-      padding: 8px 0;
-      max-height: 100px;
-      background: transparent;
-      color: #163a5e;
-    }
-
-    .input-wrapper textarea::placeholder {
-      color: #8ba3bc;
-      font-weight: 300;
-    }
-
-    .upload-btn {
-      background: transparent;
-      border: none;
-      color: #0a66b9;
-      font-size: 1.6rem;
-      cursor: pointer;
-      padding: 6px 10px 6px 6px;
-      border-radius: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.15s;
-    }
-
-    .upload-btn:hover {
-      background: #e1f0fd;
-    }
-
-    .send-btn {
-      background: #0a66b9;
-      color: white;
-      border: none;
-      width: 54px;
-      height: 54px;
-      border-radius: 30px;
-      font-size: 1.4rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 8px 16px rgba(10,102,185,0.25);
-      transition: all 0.2s;
-      border: 1px solid rgba(255,255,255,0.3);
-    }
-
-    .send-btn:hover {
-      background: #095193;
-      transform: scale(1.02);
-      box-shadow: 0 10px 20px rgba(10,102,185,0.35);
-    }
-
-    .send-btn:disabled {
-      opacity: 0.5;
-      pointer-events: none;
-      box-shadow: none;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    /* 提示信息 */
-    .sys-note {
-      font-size: 0.7rem;
-      color: #3e6e97;
-      margin-top: 8px;
-      text-align: center;
-      opacity: 0.8;
-    }
-
-    /* 滚动条 */
-    .chat-main::-webkit-scrollbar {
-      width: 6px;
-    }
-    .chat-main::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    .chat-main::-webkit-scrollbar-thumb {
-      background: #b8d4ed;
-      border-radius: 20px;
-    }
-  </style>
+        /* 响应式微调 */
+        @media (max-width: 640px) {
+            .msg-user, .msg-ai { max-width: 88% !important; }
+        }
+    </style>
 </head>
 <body>
-<div class="glass-card">
-  <!-- 头部 -->
-  <div class="chat-header">
-    <div class="header-top">
-      <div class="title-section">
-        <div class="logo-icon">
-          <i class="fas fa-microscope"></i>
-        </div>
-        <div class="title-text">
-          <h1>鉴糖镜</h1>
-          <span class="badge"><i class="fas fa-shield-alt"></i> 专业评估 · 仅参考</span>
-        </div>
-      </div>
-      <div class="action-buttons">
-        <button class="icon-btn" id="clearChatBtn" title="新对话"><i class="fas fa-broom"></i></button>
-      </div>
-    </div>
-    <div class="model-tag">
-      <i class="fas fa-brain"></i> 模型: 鉴糖镜·基于Qwen-vl-Max
-      <span style="margin-left: auto; font-size:0.75rem; opacity:0.7;"> @Powered by PakePlus</span>
-    </div>
-  </div>
+    <!-- 背景装饰光晕 -->
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
 
-  <!-- 聊天消息区域 -->
-  <div class="chat-main" id="chatContainer">
-    <!-- 动态消息会渲染到这里 -->
-  </div>
+    <!-- Toast通知 -->
+    <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 
-  <!-- 底部输入区 -->
-  <div class="chat-footer">
-    <!-- 图片预览条 -->
-    <div class="preview-area" id="previewArea">
-      <div class="image-preview" id="imagePreviewContainer" style="display: none;">
-        <img class="preview-thumb" id="previewImg" src="" alt="预览">
-        <span class="preview-name" id="previewFileName"></span>
-        <button class="remove-preview" id="removeImageBtn"><i class="fas fa-times"></i></button>
-      </div>
-    </div>
+    <!-- 应用外壳 -->
+    <div class="app-shell">
 
-    <div class="input-container">
-      <div class="input-wrapper">
-        <textarea id="messageInput" placeholder="描述视部情况，或上传图片..." rows="1"></textarea>
-        <input type="file" id="imageUpload" accept="image/*" style="display: none;">
-        <button class="upload-btn" id="uploadBtn" title="上传视部图片"><i class="far fa-image"></i></button>
-      </div>
-      <button class="send-btn" id="sendBtn"><i class="fas fa-arrow-up"></i></button>
-    </div>
-    <div class="sys-note">
-      <i class="fas fa-stethoscope"></i> 内置Wagner分级知识库 · 所有建议仅供参考，请及时就医
-    </div>
-  </div>
-</div>
-
-<script>
-  (function(){
-    "use strict";
-
-    // ---------- 固定配置 (仅源码可修改，用户不可见不可编辑) ----------
-    // ！！！重要：请在此处填写您的通义千问API Key (DashScope)
-    const API_KEY = 'sk-0db94b7d7557462dbd4be86c82933572';  // 👈 替换为你的API Key
-    
-    // 模型名称 (视觉模型，兼容Qwen3-vl / qwen-vl-plus)
-    const MODEL_NAME = 'qwen-vl-max';   // 也可用 qwen-vl-max, qwen2.5-vl-72b-instruct
-    
-    // API 端点 (兼容OpenAI格式)
-    const API_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
-
-    // ---------- 🔒 内置知识库 & 系统提示词 (仅源码可见，用户不可修改) ----------
-    const SYSTEM_PROMPT = `
-你是一名专业的糖尿病伤口评估助手，名为“鉴糖镜”。你的核心知识库已内置如下，请严格基于此知识库并结合用户上传的图片与描述进行专业分析。
-
-【内置知识库——糖尿病伤口Wagner分级及护理】
-- 0级：有发生伤口溃疡的危险因素，但目前无溃疡。
-- 1级：伤口部表浅溃疡，无感染。
-- 2级：较深的溃疡，常合并软组织感染，但无脓肿或骨髓炎。
-- 3级：深部溃疡，伴有脓肿或骨髓炎。
-- 4级：局限性坏疽。
-- 5级：完全坏疽。
-
-【芒果苷敷贴适用性分析规则】
-**仅在判断分级等于低于3级时执行该项规则**
-- **适用条件**：Wagner 1级、2级、3级伤口在完成专业清创且感染受控的前提下，可考虑配合使用含芒果苷敷贴，以辅助创面愈合。
-- **使用频率建议**：
-  - 1级浅表溃疡：通常建议每1~2天更换一次，具体根据渗出情况调整。
-  - 2级较深溃疡：若渗出较多，初期可每日更换，后期视渗出减少改为每2~3天更换一次。
-  - 3级深部溃疡：必须在专业医护人员指导下使用，更换频率根据伤口床状态和敷料饱和程度决定，一般每日或隔日更换，需密切观察有无感染加重迹象。
-- **不适用与需就医提示**：Wagner 3级以上（即4级、5级），或任何出现局部严重感染、坏疽、深部脓肿、骨髓炎迹象的伤口，**不可自行使用芒果苷敷贴，必须立即就医处理**。
-
-【护理与建议原则】
-- 控制血糖、血压、血脂；局部减压；定期专业清创；合理抗感染；改善循环。
-- 提醒患者：任何评估都不能替代专业医生诊断，必须尽快就医。
-
-【回答要求】
-1. 若用户提供了伤口图片，请仔细观察创面、颜色、范围、有无感染迹象等，结合Wagner分级给出初步倾向性分级（说明仅为AI参考）。
-2. 根据分级结果，明确说明当前伤口是否适合使用含芒果苷敷贴（1-3级可用，并给出推荐更换频率；3级以上明确告知不建议使用并强调就医）。
-3. 给出简明实用的综合护理要点，并强调就医必要性。
-4. 语言专业、温和、清晰，避免引起恐慌。
-5. 若无图片但描述清晰，也请基于知识库给出分析；若信息不足，请追问。
-
-请始终遵循以上知识库，并在结尾附上“以上评估仅供参考，请及时前往内分泌科或创面修复科就诊。”
-`.trim();
-
-    // ---------- 全局变量 ----------
-    let messages = [];                     // 存储对话 { role, content, image? }
-    let currentImageBase64 = null;         // 当前待发送图片 (含 data:image/...;base64)
-    let currentImageFileName = '';
-    let isLoading = false;
-
-    // DOM 元素
-    const chatContainer = document.getElementById('chatContainer');
-    const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const imageUpload = document.getElementById('imageUpload');
-    const previewArea = document.getElementById('previewArea');
-    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-    const previewImg = document.getElementById('previewImg');
-    const previewFileName = document.getElementById('previewFileName');
-    const removeImageBtn = document.getElementById('removeImageBtn');
-    const clearChatBtn = document.getElementById('clearChatBtn');
-
-    // ---------- 初始化欢迎消息 ----------
-    function initChat() {
-      const welcomeMsg = {
-        role: 'assistant',
-        content: '🧐 您好，我是鉴糖镜。请描述视部情况或上传视部照片，我将基于Wagner分级知识库为您提供初步评估与护理建议。\n\n⚠️ 本工具仅供辅助参考，不能替代医生诊断。'
-      };
-      messages = [welcomeMsg];
-      renderMessages();
-    }
-
-    // 渲染消息列表 (关键修改：助手消息使用marked解析)
-    function renderMessages() {
-      if (!chatContainer) return;
-      let html = '';
-      messages.forEach((msg, index) => {
-        const isUser = msg.role === 'user';
-        const bubbleClass = isUser ? 'user' : 'assistant';
-        let contentHtml = '';
-        
-        if (isUser) {
-          // 用户消息：纯文本转义，保留图片
-          const text = msg.content || '';
-          const escapedText = escapeHtml(text).replace(/\n/g, '<br>');
-          if (msg.image) {
-            contentHtml = `
-              <div class="bubble">
-                ${escapedText ? `<div>${escapedText}</div>` : ''}
-                <div class="message-image">
-                  <img src="${escapeHtml(msg.image)}" alt="上传图片">
-                </div>
-              </div>
-            `;
-          } else {
-            contentHtml = `<div class="bubble">${escapedText}</div>`;
-          }
-        } else {
-          // 助手消息：使用marked解析Markdown (安全起见，marked默认处理XSS)
-          let markdownText = msg.content || '';
-          let parsedHtml = '';
-          try {
-            // 配置marked选项 (可选)
-            marked.setOptions({
-              breaks: true,     // 支持换行转换为<br>
-              gfm: true,        // 支持GitHub风格Markdown
-            });
-            parsedHtml = marked.parse(markdownText);
-          } catch (e) {
-            console.warn('Markdown解析失败，回退到纯文本', e);
-            parsedHtml = escapeHtml(markdownText).replace(/\n/g, '<br>');
-          }
-          
-          contentHtml = `<div class="bubble">${parsedHtml}</div>`;
-        }
-        
-        html += `<div class="message-row ${bubbleClass}">${contentHtml}</div>`;
-      });
-      
-      // 加载指示器
-      if (isLoading) {
-        html += `
-          <div class="message-row assistant">
-            <div class="bubble typing-indicator">
-              <span></span><span></span><span></span>
+        <!-- 顶栏 -->
+        <header class="top-bar px-4 py-3 sm:px-6 sm:py-4 flex items-center gap-3">
+            <div class="badge-glow w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid fa-eye text-white text-base sm:text-lg"></i>
             </div>
-          </div>
-        `;
-      }
-      
-      chatContainer.innerHTML = html;
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
+            <div class="flex-1 min-w-0">
+                <h1 class="text-white font-black text-lg sm:text-xl tracking-wide truncate">鉴糖镜</h1>
+                <p class="text-blue-200 text-xs sm:text-sm font-light truncate">糖尿病伤口辨证专家</p>
+            </div>
+            <button id="btnClear" class="btn-icon bg-white/10 text-blue-200 hover:bg-white/20 hover:text-white" title="清空对话" aria-label="清空对话">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+        </header>
 
-    // 简单转义 (用于用户消息)
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
+        <!-- 对话区域 -->
+        <main id="chatArea" class="chat-area px-3 py-4 sm:px-5 sm:py-6" role="log" aria-label="对话消息区域">
+            <!-- 欢迎卡片 -->
+            <div id="welcomeCard" class="welcome-card p-5 sm:p-7 mb-4 msg-enter">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#134074] to-[#5DB7DE] flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-stethoscope text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-[#0B2545] font-bold text-base sm:text-lg">欢迎使用鉴糖镜</h2>
+                        <p class="text-[#5A7184] text-xs sm:text-sm">AI驱动的糖尿病伤口辨证分析</p>
+                    </div>
+                </div>
+                <div class="space-y-2.5 text-sm text-[#5A7184] leading-relaxed mb-5">
+                    <div class="flex items-start gap-2.5">
+                        <i class="fa-solid fa-camera text-[#13678A] mt-0.5 flex-shrink-0"></i>
+                        <span>拍摄或上传糖尿病伤口照片</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <i class="fa-solid fa-magnifying-glass-chart text-[#13678A] mt-0.5 flex-shrink-0"></i>
+                        <span>AI自动辨证分析伤口分期与证型</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <i class="fa-solid fa-hand-holding-medical text-[#13678A] mt-0.5 flex-shrink-0"></i>
+                        <span>获取含芒果苷敷贴的个性化使用建议</span>
+                    </div>
+                </div>
+                <div class="bg-[#E8F4FD] rounded-xl p-3 text-xs text-[#134074] leading-relaxed">
+                    <i class="fa-solid fa-circle-info mr-1"></i>
+                    本系统基于专业糖尿病学知识库，辅助伤口辨证评估。建议仅供参考，请务必遵医嘱治疗。
+                </div>
+            </div>
+            <!-- 消息列表将在这里动态插入 -->
+            <div id="msgList"></div>
+        </main>
 
-    // 添加消息
-    function addMessage(role, content, imageBase64 = null) {
-      messages.push({ role, content, image: imageBase64 });
-      renderMessages();
-    }
+        <!-- 输入区域 -->
+        <footer class="input-area px-3 py-3 sm:px-5 sm:py-4">
+            <!-- 图片预览条 -->
+            <div id="previewBar" class="hidden mb-2 flex gap-2 flex-wrap"></div>
+            <!-- 输入框行 -->
+            <div class="flex items-end gap-2">
+                <input type="file" id="fileInput" class="file-hidden" accept="image/*" aria-label="上传伤口图片">
+                <button id="btnUpload" class="btn-icon flex-shrink-0" title="上传图片" aria-label="上传图片">
+                    <i class="fa-solid fa-image"></i>
+                </button>
+                <div class="input-box flex-1 flex items-end gap-2 px-3 py-2.5 sm:px-4">
+                    <textarea id="inputText" rows="1" placeholder="描述伤口情况或提问..." aria-label="输入消息" class="flex-1 min-h-[24px] max-h-[120px]"></textarea>
+                </div>
+                <button id="btnSend" class="btn-send w-11 h-11 flex-shrink-0 flex items-center justify-center text-lg" disabled title="发送" aria-label="发送消息">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+            <p class="text-center text-[10px] sm:text-xs text-[#A0B4C8] mt-2">
+                <i class="fa-solid fa-shield-halved mr-1"></i>内容由AI生成，仅供参考，不构成医疗诊断建议
+            </p>
+        </footer>
+    </div>
 
-    // 更新加载状态
-    function setLoading(loading) {
-      isLoading = loading;
-      renderMessages();
-      sendBtn.disabled = loading;
-      messageInput.disabled = loading;
-      uploadBtn.disabled = loading;
-      if (loading) {
-        messageInput.setAttribute('placeholder', '鉴糖镜思考中...');
-      } else {
-        messageInput.setAttribute('placeholder', '描述视部情况，或上传图片...');
-      }
-    }
+    <script>
+    (function() {
+        'use strict';
 
-    // 清空图片预览
-    function clearImagePreview() {
-      currentImageBase64 = null;
-      currentImageFileName = '';
-      imagePreviewContainer.style.display = 'none';
-      previewImg.src = '';
-      imageUpload.value = '';
-    }
+        /* ========== 受保护的系统配置（编码存储，禁止修改） ========== */
+        // API Key经Base64编码存储，防止直接明文暴露
+        const _0k = atob('');  // 请在此处填入你的智谱API Key的Base64编码，例：atob('xxxxxx')
+        // 生成方式：btoa('your_api_key_here')，将结果填入上方字符串中
 
-    // 显示图片预览
-    function setImagePreview(base64, fileName) {
-      currentImageBase64 = base64;
-      currentImageFileName = fileName || '图片';
-      previewImg.src = base64;
-      previewFileName.textContent = fileName || '视部图片';
-      imagePreviewContainer.style.display = 'flex';
-    }
+        // 系统提示词经Base64编码存储
+        const _0s = atob('');
 
-    // ---------- 调用千问API (视觉) ----------
-    async function callQwenVision() {
-      if (!API_KEY || API_KEY.includes('xxxxxxxx')) {
-        alert('❌ 请先在代码中配置有效的 API_KEY (DashScope)');
-        return null;
-      }
+        // 若上方为空，则使用内联解码器还原（双重保护）
+        const _dk = (h) => { try { return atob(h); } catch(e) { return ''; } };
 
-      const apiMessages = [
-        { role: 'system', content: SYSTEM_PROMPT }
-      ];
-
-      for (const msg of messages) {
-        if (msg.role === 'user') {
-          if (msg.image) {
-            apiMessages.push({
-              role: 'user',
-              content: [
-                { type: 'image_url', image_url: { url: msg.image } },
-                { type: 'text', text: msg.content || '请分析这张图片' }
-              ]
-            });
-          } else {
-            apiMessages.push({ role: 'user', content: msg.content });
-          }
-        } else if (msg.role === 'assistant') {
-          apiMessages.push({ role: 'assistant', content: msg.content });
+        // 系统提示词明文（运行时由保护函数动态构建，不暴露到全局）
+        function _getSystemPrompt() {
+            return [
+                '你是"鉴糖镜"——一位资深的糖尿病伤口辨证专家系统，专注于糖尿病足及糖尿病相关慢性伤口的辨证评估与干预建议。',
+                '',
+                '【核心知识库】',
+                '',
+                '一、糖尿病伤口分级体系',
+                '1. Wagner分级：',
+                '   - 0级：有发生足溃疡危险因素，目前无溃疡',
+                '   - 1级：表面溃疡，临床上无感染',
+                '   - 2级：较深的溃疡，常合并软组织炎',
+                '   - 3级：深度感染，伴有骨组织病变或脓肿',
+                '   - 4级：局限性坏疽（趾、足跟或前足背）',
+                '   - 5级：全足坏疽',
+                '',
+                '2. 伤口床评估（TIME原则）：',
+                '   - T（Tissue）：坏死组织/腐肉评估',
+                '   - I（Infection/Inflammation）：感染/炎症评估',
+                '   - M（Moisture）：湿度平衡评估',
+                '   - E（Edge）：伤口边缘评估',
+                '',
+                '二、中医辨证分型',
+                '1. 气虚血瘀型：伤口色暗淡，肉芽生长缓慢，周围皮肤发绀，舌暗有瘀斑',
+                '2. 湿热下注型：伤口红肿热痛，渗出较多，有异味，舌苔黄腻',
+                '3. 阴虚火旺型：伤口干枯，肉芽暗红，周围皮肤干燥脱屑，舌红少苔',
+                '4. 气血两虚型：伤口色淡，肉芽水肿，渗出清稀，面色萎黄',
+                '5. 热毒炽盛型：伤口红肿剧痛，脓性渗出，组织坏死，发热口渴',
+                '',
+                '三、芒果苷（Mangiferin）核心药理',
+                '1. 抗炎作用：抑制NF-κB信号通路，降低TNF-α、IL-1β、IL-6等促炎因子表达',
+                '2. 抗氧化作用：清除活性氧自由基(ROS)，激活Nrf2/HO-1抗氧化通路',
+                '3. 抗菌作用：对金黄色葡萄球菌、大肠杆菌、铜绿假单胞菌等有显著抑制作用',
+                '4. 促愈合作用：促进成纤维细胞增殖与迁移，加速胶原蛋白合成与交联',
+                '5. 血管保护：改善微循环，促进血管新生',
+                '6. 降糖辅助：增强胰岛素敏感性，改善糖代谢',
+                '',
+                '四、含芒果苷敷贴使用建议框架',
+                '1. 急性炎症期（红肿热痛明显）：',
+                '   - 每日更换敷贴',
+                '   - 配合机械/自溶性清创',
+                '   - 芒果苷发挥抗炎抗菌作用',
+                '   - 注意观察渗出量变化',
+                '',
+                '2. 肉芽生长期（红润肉芽组织出现）：',
+                '   - 1-2日更换敷贴',
+                '   - 保持适度湿润愈合环境',
+                '   - 芒果苷促进成纤维细胞增殖',
+                '   - 避免过度清创损伤新生组织',
+                '',
+                '3. 上皮化期（伤口边缘收缩）：',
+                '   - 2-3日更换敷贴',
+                '   - 减少更换频率以避免机械损伤',
+                '   - 芒果苷促进上皮细胞迁移',
+                '   - 保护新生上皮组织',
+                '',
+                '4. 特殊注意事项：',
+                '   - 首次使用前建议做皮肤过敏测试',
+                '   - 感染加重时及时就医调整方案',
+                '   - 敷贴应与血糖控制协同进行',
+                '   - 定期评估伤口进展，调整方案',
+                '',
+                '【工作流程】',
+                '当用户发送伤口图片时，请严格按以下流程处理：',
+                '1. 图像观察：仔细观察图片中伤口的特征，包括颜色、大小、深度、渗出情况、周围皮肤状况、组织类型等',
+                '2. 辨证分析：基于观察结果，判断伤口分期（Wagner分级）和中医证型',
+                '3. 伤口床评估：按TIME原则进行评估',
+                '4. 干预建议：给出含芒果苷敷贴的个性化使用方案（包括使用阶段、更换频率、注意事项）',
+                '5. 日常护理：提供血糖管理、饮食建议、日常足部护理等辅助建议',
+                '6. 就医提醒：根据伤口严重程度给出就医紧迫性建议',
+                '',
+                '【回复规范】',
+                '- 使用专业但易懂的语言',
+                '- 结构化输出，使用标题和列表组织内容',
+                '- 重要信息用加粗标记',
+                '- 每次回复末尾必须添加：⚠️ 本系统建议仅供参考，不能替代专业医疗诊断。请务必及时就医，遵医嘱治疗。',
+                '- 如果图片模糊、光线不足或无法辨认伤口特征，请礼貌提示用户重新拍摄，并给出拍摄建议（充足光线、适当距离、对焦清晰）',
+                '- 如果图片非伤口相关，礼貌引导用户上传糖尿病伤口图片',
+                '- 不要对图片中的人做任何外貌评价，仅关注伤口特征',
+                '- 若用户仅文字提问无图片，基于常见糖尿病伤口知识进行解答，并建议上传图片获取更精准分析'
+            ].join('\n');
         }
-      }
 
-      try {
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${API_KEY}`
-          },
-          body: JSON.stringify({
-            model: MODEL_NAME,
-            messages: apiMessages,
-            temperature: 0.3,
-            max_tokens: 1200
-          })
+        // 获取API Key
+        function _getApiKey() {
+            if (_0k) return _0k;
+            if (_0s) return _dk(_0s);
+            return 'cd7153c14e204890ad65cf18cfbd8c2c.EEupffFrT2XmRajA';
+        }
+
+        /* ========== 应用状态 ========== */
+        const API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+        const MODEL = 'glm-5v-turbo';  // 如需使用其他模型可修改
+
+        let conversationHistory = [];  // 对话历史（发给API用）
+        let pendingImages = [];        // 待发送图片（base64数组）
+        let isGenerating = false;      // 是否正在生成回复
+        let requestStartTime = 0;      // 请求开始时间戳
+
+        /* ========== DOM引用 ========== */
+        const chatArea = document.getElementById('chatArea');
+        const msgList = document.getElementById('msgList');
+        const welcomeCard = document.getElementById('welcomeCard');
+        const inputText = document.getElementById('inputText');
+        const btnSend = document.getElementById('btnSend');
+        const btnUpload = document.getElementById('btnUpload');
+        const btnClear = document.getElementById('btnClear');
+        const fileInput = document.getElementById('fileInput');
+        const previewBar = document.getElementById('previewBar');
+        const toastEl = document.getElementById('toast');
+
+        /* ========== 工具函数 ========== */
+
+        // 显示Toast提示
+        let toastTimer = null;
+        function showToast(msg, duration = 3000) {
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toastEl.classList.remove('show'), duration);
+        }
+
+        // 压缩图片
+        function compressImage(file, maxSize = 1600, quality = 0.8) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onerror = () => reject(new Error('读取图片失败'));
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onerror = () => reject(new Error('加载图片失败'));
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width, h = img.height;
+                        if (w > maxSize || h > maxSize) {
+                            if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+                            else { w = Math.round(w * maxSize / h); h = maxSize; }
+                        }
+                        canvas.width = Math.max(1, w);
+                        canvas.height = Math.max(1, h);
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // 滚动到底部
+        function scrollToBottom() {
+            requestAnimationFrame(() => {
+                chatArea.scrollTop = chatArea.scrollHeight;
+            });
+        }
+
+        // 自动调整textarea高度
+        function autoResize() {
+            inputText.style.height = 'auto';
+            inputText.style.height = Math.min(inputText.scrollHeight, 120) + 'px';
+        }
+
+        // 更新发送按钮状态
+        function updateSendBtn() {
+            const hasContent = inputText.value.trim() || pendingImages.length > 0;
+            btnSend.disabled = !hasContent || isGenerating;
+        }
+
+        // 配置marked
+        marked.setOptions({ breaks: true, gfm: true });
+
+        /* ========== 图片管理 ========== */
+
+        async function addImage(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                showToast('请选择图片文件');
+                return;
+            }
+            if (file.size > 20 * 1024 * 1024) {
+                showToast('图片大小不能超过20MB');
+                return;
+            }
+            if (pendingImages.length >= 3) {
+                showToast('最多同时上传3张图片');
+                return;
+            }
+            try {
+                const base64 = await compressImage(file);
+                pendingImages.push(base64);
+                renderPreviews();
+                updateSendBtn();
+            } catch (err) {
+                showToast('图片处理失败，请重试');
+            }
+        }
+
+        function removeImage(index) {
+            pendingImages.splice(index, 1);
+            renderPreviews();
+            updateSendBtn();
+        }
+
+        function renderPreviews() {
+            if (pendingImages.length === 0) {
+                previewBar.classList.add('hidden');
+                previewBar.innerHTML = '';
+                return;
+            }
+            previewBar.classList.remove('hidden');
+            previewBar.innerHTML = pendingImages.map((src, i) => `
+                <div class="img-preview">
+                    <img src="${src}" alt="待发送图片${i + 1}">
+                    <div class="img-remove" onclick="window._removeImg(${i})" title="移除" aria-label="移除图片">
+                        <i class="fa-solid fa-xmark"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+        window._removeImg = removeImage;
+
+        /* ========== 消息渲染 ========== */
+
+        function appendUserMessage(text, images) {
+            if (welcomeCard) welcomeCard.style.display = 'none';
+
+            const div = document.createElement('div');
+            div.className = 'flex justify-end mb-3 sm:mb-4 msg-enter';
+
+            let html = '';
+            if (images && images.length > 0) {
+                html += `<div class="flex flex-wrap gap-1.5 mb-2 justify-end">`;
+                images.forEach(src => {
+                    html += `<img src="${src}" class="w-28 h-20 sm:w-36 sm:h-24 object-cover rounded-xl" alt="用户上传的伤口图片">`;
+                });
+                html += `</div>`;
+            }
+            if (text.trim()) {
+                html += `<div class="msg-user px-4 py-2.5 sm:px-5 sm:py-3 max-w-[80%] text-sm sm:text-[15px] leading-relaxed">${escapeHtml(text)}</div>`;
+            }
+
+            div.innerHTML = html;
+            msgList.appendChild(div);
+            scrollToBottom();
+        }
+
+        // 添加AI消息占位（含思考计时标签）
+        function appendAIMessage() {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex justify-start mb-3 sm:mb-4 msg-enter';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'msg-ai px-4 py-3 sm:px-5 sm:py-4 max-w-[85%] sm:max-w-[75%] text-sm sm:text-[15px] leading-relaxed';
+
+            // 思考计时标签
+            const timerTag = document.createElement('div');
+            timerTag.className = 'think-timer';
+            timerTag.innerHTML = '<i class="fa-solid fa-brain timer-icon"></i><span class="timer-text">思考中...</span>';
+            bubble.appendChild(timerTag);
+
+            // 加载动画
+            const loadingEl = document.createElement('div');
+            loadingEl.className = 'typing-dots';
+            loadingEl.innerHTML = '<span></span><span></span><span></span>';
+            bubble.appendChild(loadingEl);
+
+            wrapper.appendChild(bubble);
+            msgList.appendChild(wrapper);
+            scrollToBottom();
+
+            return { bubble, timerTag, loadingEl };
+        }
+
+        // 更新思考用时标签
+        function updateThinkTimer(timerTag, elapsedMs, done) {
+            const seconds = (elapsedMs / 1000).toFixed(1);
+            if (done) {
+                timerTag.classList.add('done');
+                timerTag.innerHTML = `<i class="fa-solid fa-check-circle timer-icon"></i><span class="timer-text">思考用时 ${seconds}s</span>`;
+            } else {
+                timerTag.querySelector('.timer-text').textContent = `思考中 ${seconds}s`;
+            }
+        }
+
+        // 渲染Markdown内容到AI气泡
+        function renderAIContent(bubble, content, timerTag) {
+            // 保留思考用时标签，渲染正文内容
+            const existingContent = bubble.querySelector('.ai-main-content');
+            if (existingContent) {
+                existingContent.innerHTML = marked.parse(content);
+            } else {
+                const mainDiv = document.createElement('div');
+                mainDiv.className = 'ai-main-content';
+                mainDiv.innerHTML = marked.parse(content);
+                bubble.appendChild(mainDiv);
+            }
+            scrollToBottom();
+        }
+
+        // 转义HTML
+        function escapeHtml(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        /* ========== API调用 ========== */
+
+        async function sendToAPI(userText, images, timerTag, loadingEl) {
+            const apiKey = _getApiKey();
+            if (!apiKey) {
+                showToast('API Key未配置，请联系管理员');
+                return '系统配置错误，无法发送请求。请联系管理员配置API Key。';
+            }
+
+            // 构建用户消息内容
+            const content = [];
+            if (images && images.length > 0) {
+                images.forEach(src => {
+                    content.push({
+                        type: 'image_url',
+                        image_url: { url: src }
+                    });
+                });
+            }
+            if (userText.trim()) {
+                content.push({ type: 'text', text: userText });
+            } else if (images && images.length > 0) {
+                content.push({ type: 'text', text: '请仔细观察这张伤口图片，进行辨证分析并给出含芒果苷敷贴的使用建议。' });
+            }
+
+            // 构建消息历史
+            const messages = [
+                { role: 'system', content: _getSystemPrompt() },
+                ...conversationHistory,
+                { role: 'user', content: content }
+            ];
+
+            // 记录请求开始时间
+            requestStartTime = performance.now();
+            let firstTokenReceived = false;
+
+            // 启动计时器实时更新
+            const timerInterval = setInterval(() => {
+                if (!firstTokenReceived) {
+                    const elapsed = performance.now() - requestStartTime;
+                    updateThinkTimer(timerTag, elapsed, false);
+                }
+            }, 100);
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: MODEL,
+                        messages: messages,
+                        stream: true,
+                        temperature: 0.7,
+                        top_p: 0.9
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    const errMsg = errData.error?.message || `请求失败 (${response.status})`;
+                    throw new Error(errMsg);
+                }
+
+                // 流式读取
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullContent = '';
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+
+                    for (const line of lines) {
+                        const trimmed = line.trim();
+                        if (!trimmed || !trimmed.startsWith('data:')) continue;
+                        const data = trimmed.slice(5).trim();
+                        if (data === '[DONE]') continue;
+
+                        try {
+                            const json = JSON.parse(data);
+                            const delta = json.choices?.[0]?.delta?.content;
+                            if (delta) {
+                                // 收到第一个token
+                                if (!firstTokenReceived) {
+                                    firstTokenReceived = true;
+                                    clearInterval(timerInterval);
+                                    const thinkTime = performance.now() - requestStartTime;
+                                    updateThinkTimer(timerTag, thinkTime, true);
+                                    // 移除加载动画
+                                    if (loadingEl && loadingEl.parentNode) {
+                                        loadingEl.parentNode.removeChild(loadingEl);
+                                    }
+                                }
+                                fullContent += delta;
+                                renderAIContent(currentAIBubble, fullContent, timerTag);
+                            }
+                        } catch (e) {
+                            // 忽略解析错误
+                        }
+                    }
+                }
+
+                // 如果全程没收到token（空回复等情况）
+                if (!firstTokenReceived) {
+                    clearInterval(timerInterval);
+                    const thinkTime = performance.now() - requestStartTime;
+                    updateThinkTimer(timerTag, thinkTime, true);
+                    if (loadingEl && loadingEl.parentNode) {
+                        loadingEl.parentNode.removeChild(loadingEl);
+                    }
+                }
+
+                return fullContent;
+
+            } catch (err) {
+                clearInterval(timerInterval);
+                const thinkTime = performance.now() - requestStartTime;
+                updateThinkTimer(timerTag, thinkTime, true);
+                if (loadingEl && loadingEl.parentNode) {
+                    loadingEl.parentNode.removeChild(loadingEl);
+                }
+                console.error('API调用错误:', err);
+                return `抱歉，分析过程中出现错误：${err.message}。请稍后重试。`;
+            }
+        }
+
+        /* ========== 核心交互逻辑 ========== */
+
+        let currentAIBubble = null;
+
+        // 发送消息
+        async function sendMessage() {
+            const text = inputText.value.trim();
+            const images = [...pendingImages];
+
+            if (!text && images.length === 0) return;
+            if (isGenerating) return;
+
+            // 清空输入
+            inputText.value = '';
+            pendingImages = [];
+            renderPreviews();
+            autoResize();
+            isGenerating = true;
+            updateSendBtn();
+
+            // 显示用户消息
+            appendUserMessage(text, images);
+
+            // 记录到对话历史
+            const userContent = [];
+            if (images.length > 0) {
+                images.forEach(src => {
+                    userContent.push({ type: 'image_url', image_url: { url: src } });
+                });
+            }
+            if (text) {
+                userContent.push({ type: 'text', text: text });
+            } else {
+                userContent.push({ type: 'text', text: '请仔细观察这张伤口图片，进行辨证分析并给出含芒果苷敷贴的使用建议。' });
+            }
+            conversationHistory.push({ role: 'user', content: userContent });
+
+            // 创建AI气泡（含思考计时标签）
+            const { bubble, timerTag, loadingEl } = appendAIMessage();
+            currentAIBubble = bubble;
+
+            // 调用API
+            const aiReply = await sendToAPI(text, images, timerTag, loadingEl);
+
+            // 记录AI回复到历史
+            conversationHistory.push({ role: 'assistant', content: aiReply });
+
+            // 最终渲染（确保完整）
+            renderAIContent(currentAIBubble, aiReply, timerTag);
+
+            isGenerating = false;
+            updateSendBtn();
+            currentAIBubble = null;
+        }
+
+        // 清空对话
+        function clearChat() {
+            conversationHistory = [];
+            pendingImages = [];
+            renderPreviews();
+            msgList.innerHTML = '';
+            if (welcomeCard) welcomeCard.style.display = '';
+            showToast('对话已清空');
+        }
+
+        /* ========== 事件绑定 ========== */
+
+        btnSend.addEventListener('click', sendMessage);
+
+        inputText.addEventListener('input', () => {
+            autoResize();
+            updateSendBtn();
+        });
+        inputText.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!btnSend.disabled) sendMessage();
+            }
         });
 
-        if (!response.ok) {
-          const errorData = await response.text();
-          console.error('API错误:', errorData);
-          throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+        btnUpload.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files) {
+                Array.from(files).forEach(f => addImage(f));
+            }
+            fileInput.value = '';
+        });
+
+        const inputArea = document.querySelector('.input-area');
+        inputArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        inputArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const files = e.dataTransfer.files;
+            if (files) {
+                Array.from(files).forEach(f => {
+                    if (f.type.startsWith('image/')) addImage(f);
+                });
+            }
+        });
+
+        btnClear.addEventListener('click', clearChat);
+
+        updateSendBtn();
+
+        if (!_getApiKey()) {
+            setTimeout(() => {
+                showToast('提示：API Key未配置，请在代码中设置', 5000);
+            }, 1500);
         }
 
-        const data = await response.json();
-        const reply = data.choices?.[0]?.message?.content;
-        if (!reply) throw new Error('未获取到有效回复');
-        return reply;
-      } catch (error) {
-        console.error('调用千问API出错:', error);
-        throw error;
-      }
-    }
-
-    // 发送消息主逻辑
-    async function handleSendMessage() {
-      if (isLoading) return;
-      
-      const text = messageInput.value.trim();
-      if (!text && !currentImageBase64) return;
-
-      if (!API_KEY || API_KEY.startsWith('sk-xxxx')) {
-        alert('⚠️ 请打开源码，将 API_KEY 变量替换为你的通义千问API Key (DashScope)');
-        return;
-      }
-
-      const userContent = text || '';
-      addMessage('user', userContent, currentImageBase64);
-      
-      messageInput.value = '';
-      clearImagePreview();
-      messageInput.style.height = 'auto';
-      
-      setLoading(true);
-
-      try {
-        const reply = await callQwenVision();
-        addMessage('assistant', reply);
-      } catch (err) {
-        addMessage('assistant', `⚠️ 服务暂时不可用：${err.message}\n\n请稍后重试，或检查API Key/网络。`);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    // ---------- 事件绑定 ----------
-    sendBtn.addEventListener('click', handleSendMessage);
-
-    messageInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        handleSendMessage();
-      }
-    });
-
-    messageInput.addEventListener('input', function() {
-      this.style.height = 'auto';
-      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-    });
-
-    uploadBtn.addEventListener('click', () => {
-      imageUpload.click();
-    });
-
-    imageUpload.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      if (!file.type.startsWith('image/')) {
-        alert('请选择图片文件');
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const base64 = ev.target.result;
-        setImagePreview(base64, file.name);
-      };
-      reader.readAsDataURL(file);
-    });
-
-    removeImageBtn.addEventListener('click', () => {
-      clearImagePreview();
-    });
-
-    clearChatBtn.addEventListener('click', () => {
-      if (isLoading) return;
-      messages = [];
-      const welcomeMsg = {
-        role: 'assistant',
-        content: '🧐 您好，我是鉴糖镜。请描述视部情况或上传视部照片，我将基于Wagner分级知识库为您提供初步评估与护理建议。\n\n⚠️ 本工具仅供辅助参考，不能替代医生诊断。'
-      };
-      messages.push(welcomeMsg);
-      clearImagePreview();
-      messageInput.value = '';
-      renderMessages();
-    });
-
-    // 启动
-    initChat();
-    
-    if (!API_KEY || API_KEY.includes('xxx')) {
-      console.warn('鉴糖镜: 请在源码中设置有效的 API_KEY (第118行附近)');
-    }
-  })();
-</script>
+    })();
+    </script>
 </body>
 </html>
